@@ -75,6 +75,7 @@ func deploy(client *github.Client, owner, repo string, depl *github.Deployment) 
   }
 
   env := []string{
+    fmt.Sprintf("GITHUB_ENV=%s", *env),
     fmt.Sprintf("GITHUB_TASK=%s", *depl.Task),
     fmt.Sprintf("GITHUB_DEPLOYMENT_ID=%d", *depl.ID),
     fmt.Sprintf("GITHUB_DEPLOYMENT_URL=%s", *depl.URL),
