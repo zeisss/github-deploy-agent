@@ -1,7 +1,14 @@
 #!/bin/bash
 
 echo "DEPLOYMENT SCRIPT"
+echo "================="
 
 env
 
-sleep 10
+echo
+echo "Deploying $GITHUB_REF (sha $GITHUB_SHA)."
+echo
+
+sleep 5
+
+echo "done"

@@ -11,6 +11,7 @@ import (
   "github.com/google/go-github/github"
   "github.com/spf13/pflag"
   "golang.org/x/oauth2"
+  "github.com/giantswarm/retry-go"
 )
 
 var (
@@ -34,41 +35,35 @@ func main() {
   repo := s[1]
 
   var err error
-  var minID int
+  var lastID int
   for {
-    if minID, err = checkRepo(client, owner, repo, minID); err != nil {
+    if lastID, err = checkRepo(client, owner, repo, lastID); err != nil {
       panic(err.Error())
     }
     time.Sleep(*sleepTime)
   }
 }
 
-func checkRepo(client *github.Client, owner, repo string, minID int) (int, error) {
-  deployments, _, err := client.Repositories.ListDeployments(owner, repo, &github.DeploymentsListOptions{
-    Environment: *env,
-  })
+func checkRepo(client *github.Client, owner, repo string, lastID int) (int, error) {
+  deployments, err := getDeployments(client, owner, repo, *env)
   if err != nil {
     return -1, err
   }
 
-  var newestDeployment *github.Deployment
+  var newestDeployment github.Deployment
   for _, deployment := range deployments {
-    if *deployment.ID <= minID {
-      continue
-    }
-    if newestDeployment == nil || deployment.CreatedAt.Time.After(newestDeployment.CreatedAt.Time) {
-      newestDeployment = &deployment
+    if newestDeployment.CreatedAt == nil || deployment.CreatedAt.Time.After(newestDeployment.CreatedAt.Time) {
+      newestDeployment = deployment
     }
   }
 
-  if newestDeployment == nil {
+  if *newestDeployment.ID == 0 || *newestDeployment.ID == lastID {
     log.Printf("No new deployments found.\n")
-    return minID, nil
-
+    return lastID, nil
   }
 
-  log.Printf("Deploying %d\n", *newestDeployment.ID)
-  if err := deploy(client, owner, repo, newestDeployment); err != nil {
+  log.Printf("Deploying %d\n", newestDeployment.ID)
+  if err := deploy(client, owner, repo, &newestDeployment); err != nil {
     return -1, err
   }
   return *newestDeployment.ID, nil
@@ -122,11 +117,23 @@ func deploy(client *github.Client, owner, repo string, depl *github.Deployment) 
 
 func createDeploymentStatus(client *github.Client, owner, repo string,  depl *github.Deployment, state, desc string) error {
   log.Printf("Setting state=%s descr=%s\n", state, desc)
-  _, _, err := client.Repositories.CreateDeploymentStatus(owner, repo, *depl.ID, &github.DeploymentStatusRequest{
-    State: &state,
-    Description: &desc,
+  return retry.Do(func() error {
+    _, _, err := client.Repositories.CreateDeploymentStatus(owner, repo, *depl.ID, &github.DeploymentStatusRequest{
+      State: &state,
+      Description: &desc,
+    })
+    return err
   })
-  return err
+}
+
+func getDeployments(client *github.Client, owner, repo, env string) (deployments []github.Deployment, err error) {
+  retry.Do(func() error {
+    deployments, _, err = client.Repositories.ListDeployments(owner, repo, &github.DeploymentsListOptions{
+      Environment: env,
+    })
+    return err
+  })
+  return deployments, err
 }
 
 func fireHook(name string, env []string) (bool, error) {
