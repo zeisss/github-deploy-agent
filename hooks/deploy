@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo "DEPLOYMENT SCRIPT"
+
+env
+
+sleep 10
