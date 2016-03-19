@@ -1,5 +1,7 @@
 # github-deploy-agent
 
+[![wercker status](https://app.wercker.com/status/47137a6deb02cc9038120d2b8e57771b/m "wercker status")](https://app.wercker.com/project/bykey/47137a6deb02cc9038120d2b8e57771b)
+
 The github-deploy-agent is a simple go agent that periodically polls the github api and checks for new deployments.
 If found, it executes a hook to deploy.
 
