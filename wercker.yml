@@ -1,0 +1,69 @@
+box: golang
+
+build:
+  steps:
+    - wercker/setup-go-workspace:
+        package-dir: github.com/zeisss/github-deploy-agent
+    - script:
+        name: go get
+        code: |
+          go get github.com/zeisss/github-deploy-agent
+
+    - script:
+        name: prepare
+        code: mkdir $WERCKER_OUTPUT_DIR/dist
+
+    # Test the project
+    - script:
+        name: go test
+        code: |
+          go test ./...
+
+    # Build the project
+    - script:
+        name: go build (linux / ARM6)
+        code: |
+          GOOS=linux GOARCH=arm GOARM=6 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-arm6" ./server
+    - script:
+        name: go build (linux / ARM7)
+        code: |
+          GOOS=linux GOARCH=arm GOARM=7 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-arm7" ./server
+    - script:
+        name: go build (linux / AMD64)
+        code: |
+          GOOS=linux GOARCH=amd64 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-amd64" ./server
+    - script:
+        name: go build (darwin / AMD64)
+        code: |
+          GOOS=darwin go build -o $WERCKER_OUTPUT_DIR/dist/github-deploy-agent-darwin ./server
+
+deploy:
+  steps:
+    - zeisss/mfs-upload@0.1.3:
+        url: $FS_ENDPOINT
+        file: ./dist/github-deploy-agent-linux-arm6
+        path: /artifacts/github-deploy-agent/latest/github-deploy-agent-linux-arm6
+        username: $FS_USER
+        password: $FS_PASSWORD
+        acl: public-read
+    - zeisss/mfs-upload@0.1.3:
+        url: $FS_ENDPOINT
+        file: ./dist/github-deploy-agent-linux-arm7
+        path: /artifacts/github-deploy-agent/latest/github-deploy-agent-linux-arm7
+        username: $FS_USER
+        password: $FS_PASSWORD
+        acl: public-read
+    - zeisss/mfs-upload@0.1.3:
+        url: $FS_ENDPOINT
+        file: ./dist/github-deploy-agent-linux-amd64
+        path: /artifacts/github-deploy-agent/latest/github-deploy-agent-linux-amd64
+        username: $FS_USER
+        password: $FS_PASSWORD
+        acl: public-read
+    - zeisss/mfs-upload@0.1.3:
+        url: $FS_ENDPOINT
+        file: ./dist/github-deploy-agent-darwin
+        path: /artifacts/github-deploy-agent/latest/github-deploy-agent-darwin
+        username: $FS_USER
+        password: $FS_PASSWORD
+        acl: public-read
