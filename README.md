@@ -17,8 +17,8 @@ If a newer than previously deployed exists, it starts deploying it.
  * If tries executing a file called `./hooks/$task`, where `$task` is the string
    from the deployment object. This allows for different actions to be taken.
 
-   The hook gets passed a number of environment variables, including `GITHUB_REF` and `GITHUB_SHA`
-   which define which branch/commit of the repository should be commited.
+   The hook gets passed a number of environment variables (see below)
+   which define which branch/commit of the repository should be committed.
 
    This hook, which can be anything (bash scripts, binaries etc.) can now perform the actual deploy.
 
@@ -48,16 +48,14 @@ GITHUB_ENV             | The env the agent is listening on
 
 ## Caveats
 
-1. On startup, the agent always redeploys the latest deployment found in the repository. It is up
-   to the hook to ignore redeploys of the latest version, if wanted.
-
-2. If multiple deployments are created for the same environment while the agent sleeps,
+1. If multiple deployments are created for the same environment while the agent sleeps,
    only the latest is acted upon. If the deployments differ e.g. in the tasks to execute,
    this may lead to unexpected / confusing behavior.
 
-3. Although the agent is single threaded (and thus only applies one deploy at a time), it
+2. Although the agent is single threaded (and thus only applies one deploy at a time), it
    does not help you with downtime-free rollouts etc.
 
 ## Future Improvements
 * Github Deployment API supports a payload. This is currently not made available to the hook.
+
 * Expose the output of the hooks, e.g. by uploading them to Gist.

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Insert slack incoming webhook url here
+WEBHOOK=""
+
+# Customize this function to customize the variables for building the JSON.
+# Alternatively, modify format_json
+prepare_fields() {
+  TEXT=""
+  if [ "$SCRIPT" = "post_failure" ]; then
+    TEXT=":exclamation: Deployment task '${GITHUB_TASK}' failed"
+  else
+    TEXT=":eight_spoked_asterisk: Deployment task \`task=${GITHUB_TASK}\` succeeded"
+  fi
+  TEXT="$TEXT on repo <https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}|${GITHUB_REPO}> (deploy #${GITHUB_DEPLOYMENT_ID})."
+  USERNAME="Deployer for $GITHUB_ENV"
+  ICON_URL=""
+}
+
+format_json() {
+  prepare_fields
+  local json="{\"text\":\"$TEXT\""
+  if [ ! -z "$USERNAME" ]; then
+    json="$json, \"username\": \"${USERNAME}\""
+  fi
+  if [ ! -z "$ICON_URL" ]; then
+    json="$json, \"icon_url\": \"${ICON_URL}\""
+  fi
+  echo "${json}}"
+}
+
+main() {
+  SCRIPT=$(basename $0)
+
+  echo "$SCRIPT: Hello"
+  if [ -z "$WEBHOOK" ]; then
+    echo "ERROR: No WEBHOOK configured. Please manipulate $0"
+    exit 1
+  fi
+  JSON=$(format_json)
+  curl -sS -d "$JSON" "$WEBHOOK"
+  echo
+  echo "$SCRIPT: done"
+}
+main

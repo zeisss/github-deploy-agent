@@ -34,8 +34,16 @@ func main() {
   owner := s[0]
   repo := s[1]
 
-  var err error
+  deployment, err := findNewestDeployment(client, owner, repo)
+  if err != nil {
+    panic(err.Error())
+  }
+
   var lastID int
+  if deployment != nil {
+    log.Printf("Latest deployment is %d. Using as baseline.", *deployment.ID)
+    lastID = *deployment.ID
+  }
   for {
     if lastID, err = checkRepo(client, owner, repo, lastID); err != nil {
       panic(err.Error())
@@ -45,25 +53,18 @@ func main() {
 }
 
 func checkRepo(client *github.Client, owner, repo string, lastID int) (int, error) {
-  deployments, err := getDeployments(client, owner, repo, *env)
+  newestDeployment, err := findNewestDeployment(client, owner, repo)
   if err != nil {
     return -1, err
   }
 
-  var newestDeployment github.Deployment
-  for _, deployment := range deployments {
-    if newestDeployment.CreatedAt == nil || deployment.CreatedAt.Time.After(newestDeployment.CreatedAt.Time) {
-      newestDeployment = deployment
-    }
-  }
-
-  if *newestDeployment.ID == 0 || *newestDeployment.ID == lastID {
+  if newestDeployment == nil || *newestDeployment.ID == lastID {
     log.Printf("No new deployments found.\n")
     return lastID, nil
   }
 
-  log.Printf("Deploying %d\n", newestDeployment.ID)
-  if err := deploy(client, owner, repo, &newestDeployment); err != nil {
+  log.Printf("Deploying %d\n", *newestDeployment.ID)
+  if err := deploy(client, owner, repo, newestDeployment); err != nil {
     return -1, err
   }
   return *newestDeployment.ID, nil
@@ -135,6 +136,24 @@ func getDeployments(client *github.Client, owner, repo, env string) (deployments
     return err
   })
   return deployments, err
+}
+
+func findNewestDeployment(client *github.Client, owner, repo string) (*github.Deployment, error) {
+  deployments, err := getDeployments(client, owner, repo, *env)
+  if err != nil {
+    return nil, err
+  }
+
+  var newestDeployment github.Deployment
+  for _, deployment := range deployments {
+    if newestDeployment.CreatedAt == nil || deployment.CreatedAt.Time.After(newestDeployment.CreatedAt.Time) {
+      newestDeployment = deployment
+    }
+  }
+  if newestDeployment.ID == nil {
+    return nil, nil
+  }
+  return &newestDeployment, nil
 }
 
 func fireHook(name string, env []string) (bool, error) {
