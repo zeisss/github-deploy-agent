@@ -44,6 +44,7 @@ GITHUB_OWNER           | Owner of the repository
 GITHUB_REPO            | Repository name
 GITHUB_CREATOR         | Name of the user that created the deployment
 GITHUB_CREATOR_AVATAR  | Avatar URL of the creator
+GITHUB_ENV             | The env the agent is listening on
 
 ## Caveats
 
