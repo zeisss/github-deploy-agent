@@ -23,19 +23,19 @@ build:
     - script:
         name: go build (linux / ARM6)
         code: |
-          GOOS=linux GOARCH=arm GOARM=6 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-arm6" ./server
+          GOOS=linux GOARCH=arm GOARM=6 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-arm6" .
     - script:
         name: go build (linux / ARM7)
         code: |
-          GOOS=linux GOARCH=arm GOARM=7 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-arm7" ./server
+          GOOS=linux GOARCH=arm GOARM=7 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-arm7" .
     - script:
         name: go build (linux / AMD64)
         code: |
-          GOOS=linux GOARCH=amd64 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-amd64" ./server
+          GOOS=linux GOARCH=amd64 go build -o "$WERCKER_OUTPUT_DIR/dist/github-deploy-agent-linux-amd64" .
     - script:
         name: go build (darwin / AMD64)
         code: |
-          GOOS=darwin go build -o $WERCKER_OUTPUT_DIR/dist/github-deploy-agent-darwin ./server
+          GOOS=darwin go build -o $WERCKER_OUTPUT_DIR/dist/github-deploy-agent-darwin .
 
 deploy:
   steps:
