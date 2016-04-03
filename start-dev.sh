@@ -26,4 +26,4 @@ chmod +x hooks/*
 ## To create deployments
 # curl -XPOST https://api.github.com/repos/zeisss/github-deploy-agent/deployments \
 #   -H"Authorization: bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}" \
-#   -d '{"environment":"production", "ref":"master", "required_contexts": [], "task": "deploy"}'
+#   -d '{"environment":"testing", "ref":"master", "required_contexts": [], "task": "deploy"}'

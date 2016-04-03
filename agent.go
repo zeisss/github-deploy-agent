@@ -158,13 +158,14 @@ func (agent Agent) deploy(depl *github.Deployment) error {
 	}
 
 	if found, err := hooks.fire(*depl.Task); err != nil {
+		if _, err := hooks.firePostFailure(); err != nil {
+			log.Printf("post_failure failed: %v\n", err)
+		}
+
 		if err := agent.deployments.createDeploymentStatus(depl, "error", "Hook failed"); err != nil {
 			return nil
 		}
 
-		if _, err := hooks.firePostFailure(); err != nil {
-			log.Printf("post_failure failed: %v\n", err)
-		}
 	} else if !found {
 		log.Printf("No hook '%s' found.\n", *depl.Task)
 		if err := agent.deployments.createDeploymentStatus(depl, "failure", "Unknown hook: "+*depl.Task); err != nil {
@@ -175,12 +176,12 @@ func (agent Agent) deploy(depl *github.Deployment) error {
 			log.Printf("post_failure failed: %v\n", err)
 		}
 	} else {
-		if err := agent.deployments.createDeploymentStatus(depl, "success", "Finished"); err != nil {
-			return nil
-		}
-
 		if _, err := hooks.firePostSuccess(); err != nil {
 			log.Printf("post_success failed: %v\n", err)
+		}
+
+		if err := agent.deployments.createDeploymentStatus(depl, "success", "Finished"); err != nil {
+			return nil
 		}
 	}
 	return nil
