@@ -79,7 +79,7 @@ type Agent struct {
 	deployments *deploymentAPI
 }
 
-func (agent Agent) run() error {
+func (agent Agent) run(loop bool) error {
 	deployment, err := agent.deployments.findNewestDeployment(agent.env)
 	if err != nil {
 		return err
@@ -103,12 +103,15 @@ func (agent Agent) run() error {
 		log.Println("No deployment in repository found.")
 	}
 
-	for {
-		if lastID, err = agent.checkRepo(lastID); err != nil {
-			return err
+	if loop {
+		for {
+			if lastID, err = agent.checkRepo(lastID); err != nil {
+				return err
+			}
+			time.Sleep(*sleepTime)
 		}
-		time.Sleep(*sleepTime)
 	}
+	return nil
 }
 
 func (agent Agent) checkRepo(lastID int) (int, error) {

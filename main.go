@@ -15,7 +15,7 @@ var (
 	env        = pflag.String("env", "production", "The environment to act on")
 	token      = pflag.String("token", "", "API token for github")
 	sleepTime  = pflag.Duration("sleep", 60*time.Second, "Sleep time between checks to github api")
-	// once       = pflag.Bool("once", false, "Only run logic once for any open deployments")
+	once       = pflag.Bool("once", false, "Check and apploy deployments once, then exit")
 )
 
 func main() {
@@ -41,7 +41,7 @@ func main() {
 		env:         *env,
 		deployments: &deployments,
 	}
-	if err := agent.run(); err != nil {
+	if err := agent.run(!*once); err != nil {
 		log.Fatalf("Agent failed: %v", err)
 	}
 }
