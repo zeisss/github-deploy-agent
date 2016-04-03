@@ -43,6 +43,20 @@ func (api deploymentAPI) findNewestDeployment(env string) (*github.Deployment, e
 	return &newestDeployment, nil
 }
 
+func (api deploymentAPI) hasSuccessStatus(depl *github.Deployment) (bool, error) {
+	statuses, _, err := api.client.Repositories.ListDeploymentStatuses(api.owner, api.repo, *depl.ID, &github.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	for _, status := range statuses {
+		if status.State != nil && *status.State == "success" {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // createDeploymentStatus publishes a new status message for the given deployment object.
 //
 // see https://developer.github.com/v3/repos/deployments/#create-a-deployment-status
@@ -73,7 +87,16 @@ func (agent Agent) run() error {
 
 	var lastID int
 	if deployment != nil {
-		log.Printf("Latest deployment is %d. Using as baseline.", *deployment.ID)
+		// If the latest deployment has no success message, deploy it immediately
+		if success, err := agent.deployments.hasSuccessStatus(deployment); err != nil {
+			return err
+		} else if !success {
+			if err := agent.deploy(deployment); err != nil {
+				return err
+			}
+		} else {
+			log.Printf("Latest deployment %d has success message. Using as baseline.", *deployment.ID)
+		}
 		lastID = *deployment.ID
 	}
 	for {
@@ -120,6 +143,7 @@ func (agent Agent) hookContextForDeployment(depl *github.Deployment) hookCtx {
 }
 
 func (agent Agent) deploy(depl *github.Deployment) error {
+	log.Printf("Starting deployment=%d...\n", *depl.ID)
 	if err := agent.deployments.createDeploymentStatus(depl, "pending", "Firing hook"); err != nil {
 		return nil
 	}
