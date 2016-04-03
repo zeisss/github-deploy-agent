@@ -37,35 +37,6 @@ build:
         code: |
           GOOS=darwin go build -o $WERCKER_OUTPUT_DIR/dist/github-deploy-agent-darwin .
 
-    - zeisss/mfs-upload@0.1.3:
-        url: $FS_ENDPOINT
-        file: ./dist/github-deploy-agent-linux-arm6
-        path: /artifacts/github-deploy-agent/${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}/github-deploy-agent-linux-arm6
-        username: $FS_USER
-        password: $FS_PASSWORD
-        acl: public-read
-    - zeisss/mfs-upload@0.1.3:
-        url: $FS_ENDPOINT
-        file: ./dist/github-deploy-agent-linux-arm7
-        path: /artifacts/github-deploy-agent/${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}/github-deploy-agent-linux-arm7
-        username: $FS_USER
-        password: $FS_PASSWORD
-        acl: public-read
-    - zeisss/mfs-upload@0.1.3:
-        url: $FS_ENDPOINT
-        file: ./dist/github-deploy-agent-linux-amd64
-        path: /artifacts/github-deploy-agent/${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}/github-deploy-agent-linux-amd64
-        username: $FS_USER
-        password: $FS_PASSWORD
-        acl: public-read
-    - zeisss/mfs-upload@0.1.3:
-        url: $FS_ENDPOINT
-        file: ./dist/github-deploy-agent-darwin
-        path: /artifacts/github-deploy-agent/${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}/github-deploy-agent-darwin
-        username: $FS_USER
-        password: $FS_PASSWORD
-        acl: public-read
-
 deploy:
   steps:
     - zeisss/mfs-upload@0.1.3:
