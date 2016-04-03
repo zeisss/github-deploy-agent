@@ -91,6 +91,7 @@ func (agent Agent) run() error {
 		if success, err := agent.deployments.hasSuccessStatus(deployment); err != nil {
 			return err
 		} else if !success {
+			log.Printf("Found new deployment=%d\n", *deployment.ID)
 			if err := agent.deploy(deployment); err != nil {
 				return err
 			}
@@ -98,7 +99,10 @@ func (agent Agent) run() error {
 			log.Printf("Latest deployment %d has success message. Using as baseline.", *deployment.ID)
 		}
 		lastID = *deployment.ID
+	} else {
+		log.Println("No deployment in repository found.")
 	}
+
 	for {
 		if lastID, err = agent.checkRepo(lastID); err != nil {
 			return err
