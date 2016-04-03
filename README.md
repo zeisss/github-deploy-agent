@@ -9,8 +9,11 @@ If found, it executes a hook to deploy.
 
 In my case I use [wercker](https://wercker.com) to create a deployment object in the repository.
 
-The agent periodically polls this repository and looks for the latest deployment.
-If a newer than previously deployed exists, it starts deploying it.
+On startup the agent looks for the latest deployment object, and deploys it, if no
+success message has been created yet.
+
+The agent then periodically polls the repository and grabs the latest deployment.
+If it is newer than the previously deployed one, it starts deploying the new one.
 
  * It creates a deployment status `pending`.
  * A `pre_task` is fired, if available.
@@ -21,12 +24,13 @@ If a newer than previously deployed exists, it starts deploying it.
    which define which branch/commit of the repository should be committed.
 
    This hook, which can be anything (bash scripts, binaries etc.) can now perform the actual deploy.
-
- * The agent creates a `success` status if the exit code is `0`, `failure` otherwise.
  * A `post_success` hook is fired on success with the same environment variables,
    a `post_failure` otherwise. Errors here are ignored.
 
    This can be used for slack notifications etc.
+ * The agent creates a `success` status if the exit code is `0`, `failure` otherwise.
+   If the task didn't exist as a hook, an `error` status is raised.
+
  * The agent sleeps for `--sleep` before checking for the next deployment again.
 
 ## Environment Variables
