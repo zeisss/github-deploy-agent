@@ -24,6 +24,14 @@ func main() {
 
 	ctx := context.Background()
 
+	agent := initAgent(ctx, *repository, *env)
+	if err := agent.Run(ctx, !*once, *sleepTime); err != nil {
+		log.Fatalf("Agent failed: %v", err)
+	}
+}
+
+func initAgent(ctx context.Context, ownerRepo, env string) *agent.Agent {
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: *token},
 	)
@@ -31,14 +39,12 @@ func main() {
 
 	client := github.NewClient(tc)
 
-	deployments := agent.NewDeploymentAPI(*repository, *env, client)
+	deployments := agent.NewDeploymentAPI(ownerRepo, env, client)
 	agent := agent.Agent{
 		Deployments: deployments,
 		Deployer: &agent.Deployer{
 			Deployments: deployments,
 		},
 	}
-	if err := agent.Run(ctx, !*once, *sleepTime); err != nil {
-		log.Fatalf("Agent failed: %v", err)
-	}
+	return &agent
 }
