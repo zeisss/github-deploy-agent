@@ -46,11 +46,11 @@ func (api *DeploymentOptions) FindNewestDeployment(ctx context.Context) (*github
 
 	var newestDeployment *github.Deployment
 	for _, deployment := range deployments {
-		if newestDeployment.CreatedAt == nil || deployment.CreatedAt.Time.After(newestDeployment.CreatedAt.Time) {
+		if newestDeployment == nil || deployment.CreatedAt.Time.After(newestDeployment.CreatedAt.Time) {
 			newestDeployment = deployment
 		}
 	}
-	if newestDeployment.ID == nil {
+	if newestDeployment == nil {
 		return nil, nil
 	}
 	return newestDeployment, nil
