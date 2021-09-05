@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -eu
-test ! -z "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+test ! -z "${GITHUB_TOKEN}"
 
 ## Create a tmp folder to run this in
 rm -rf tmp
@@ -20,10 +20,10 @@ chmod +x hooks/*
 ../github-deploy-agent \
   --env="testing" \
   --repository="zeisss/github-deploy-agent" \
-  --token="${GITHUB_PERSONAL_ACCESS_TOKEN}" \
+  --token="${GITHUB_TOKEN}" \
   --sleep="30s"
 
 ## To create deployments
 # curl -XPOST https://api.github.com/repos/zeisss/github-deploy-agent/deployments \
-#   -H"Authorization: bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}" \
+#   -H"Authorization: bearer ${GITHUB_TOKEN}" \
 #   -d '{"environment":"testing", "ref":"master", "required_contexts": [], "task": "deploy"}'

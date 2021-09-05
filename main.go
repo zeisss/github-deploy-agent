@@ -44,6 +44,7 @@ func initAgent(ctx context.Context, ownerRepo, env string) *agent.Agent {
 		Deployments: deployments,
 		Deployer: &agent.Deployer{
 			Deployments: deployments,
+			Log:         log.Default(),
 		},
 	}
 	return &agent

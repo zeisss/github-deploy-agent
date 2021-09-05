@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	"github.com/giantswarm/retry-go"
@@ -79,7 +78,6 @@ func hasState(statuses []*github.DeploymentStatus, needleState string) bool {
 // state = pending | success | error | failure
 // description = string(140)
 func (api *DeploymentOptions) CreateDeploymentStatus(ctx context.Context, depl *github.Deployment, state, desc string) error {
-	log.Printf("Setting state=%s descr=%s\n", state, desc)
 	return retry.Do(func() error {
 		_, _, err := api.client.Repositories.CreateDeploymentStatus(ctx, api.owner, api.repo, *depl.ID, &github.DeploymentStatusRequest{
 			State:       &state,

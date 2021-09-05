@@ -29,7 +29,7 @@ func (agent Agent) Run(ctx context.Context, loop bool, sleepTime time.Duration) 
 				return err
 			}
 		} else {
-			log.Printf("Latest deployment %d has success message. Using as baseline.", *deployment.ID)
+			log.Printf("Latest deployment %d (from %s) has 'success' message. Using as baseline.", *deployment.ID, deployment.CreatedAt)
 		}
 		lastID = *deployment.ID
 	} else {
