@@ -11,12 +11,11 @@ import (
 
 // Agent applies deployments
 type Agent struct {
-	Env         string
 	Deployments *DeploymentAPI
 }
 
 func (agent Agent) Run(ctx context.Context, loop bool, sleepTime time.Duration) error {
-	deployment, err := agent.Deployments.findNewestDeployment(ctx, agent.Env)
+	deployment, err := agent.Deployments.findNewestDeployment(ctx)
 	if err != nil {
 		return err
 	}
@@ -51,7 +50,7 @@ func (agent Agent) Run(ctx context.Context, loop bool, sleepTime time.Duration) 
 }
 
 func (agent Agent) checkRepo(ctx context.Context, lastID int64) (int64, error) {
-	newestDeployment, err := agent.Deployments.findNewestDeployment(ctx, agent.Env)
+	newestDeployment, err := agent.Deployments.findNewestDeployment(ctx)
 	if err != nil {
 		return -1, err
 	}
@@ -70,7 +69,7 @@ func (agent Agent) checkRepo(ctx context.Context, lastID int64) (int64, error) {
 
 func (agent Agent) hookContextForDeployment(depl *github.Deployment) Hooks {
 	hookEnv := []string{
-		fmt.Sprintf("GITHUB_ENV=%s", agent.Env),
+		fmt.Sprintf("GITHUB_ENV=%s", *depl.Environment),
 		fmt.Sprintf("GITHUB_TASK=%s", *depl.Task),
 		fmt.Sprintf("GITHUB_DEPLOYMENT_ID=%d", *depl.ID),
 		fmt.Sprintf("GITHUB_DEPLOYMENT_URL=%s", *depl.URL),

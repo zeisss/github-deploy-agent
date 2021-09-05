@@ -31,9 +31,8 @@ func main() {
 
 	client := github.NewClient(tc)
 
-	deployments := agent.NewDeploymentAPI(*repository, client)
+	deployments := agent.NewDeploymentAPI(*repository, *env, client)
 	agent := agent.Agent{
-		Env:         *env,
 		Deployments: deployments,
 	}
 	if err := agent.Run(ctx, !*once, *sleepTime); err != nil {

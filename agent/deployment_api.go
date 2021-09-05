@@ -9,7 +9,7 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func NewDeploymentAPI(repository string, client *github.Client) *DeploymentAPI {
+func NewDeploymentAPI(repository, env string, client *github.Client) *DeploymentAPI {
 	s := strings.Split(repository, "/")
 	owner := s[0]
 	repo := s[1]
@@ -17,28 +17,29 @@ func NewDeploymentAPI(repository string, client *github.Client) *DeploymentAPI {
 	return &DeploymentAPI{
 		owner:  owner,
 		repo:   repo,
+		env:    env,
 		client: client,
 	}
 }
 
 type DeploymentAPI struct {
-	owner  string
-	repo   string
-	client *github.Client
+	owner, repo string
+	env         string
+	client      *github.Client
 }
 
-func (api *DeploymentAPI) getDeployments(ctx context.Context, env string) (deployments []*github.Deployment, err error) {
+func (api *DeploymentAPI) getDeployments(ctx context.Context) (deployments []*github.Deployment, err error) {
 	retry.Do(func() error {
 		deployments, _, err = api.client.Repositories.ListDeployments(ctx, api.owner, api.repo, &github.DeploymentsListOptions{
-			Environment: env,
+			Environment: api.env,
 		})
 		return err
 	})
 	return deployments, err
 }
 
-func (api *DeploymentAPI) findNewestDeployment(ctx context.Context, env string) (*github.Deployment, error) {
-	deployments, err := api.getDeployments(ctx, env)
+func (api *DeploymentAPI) findNewestDeployment(ctx context.Context) (*github.Deployment, error) {
+	deployments, err := api.getDeployments(ctx)
 	if err != nil {
 		return nil, err
 	}
