@@ -61,13 +61,16 @@ func (api *DeploymentOptions) HasSuccessStatus(ctx context.Context, depl *github
 	if err != nil {
 		return false, err
 	}
+	return hasState(statuses, "success"), nil
+}
 
+func hasState(statuses []*github.DeploymentStatus, needleState string) bool {
 	for _, status := range statuses {
-		if status.State != nil && *status.State == "success" {
-			return true, nil
+		if status.State != nil && *status.State == needleState {
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
 // CreateDeploymentStatus publishes a new status message for the given deployment object.
