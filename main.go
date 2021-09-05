@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/spf13/pflag"
+	"github.com/zeisss/github-deploy-agent/agent"
 	"golang.org/x/oauth2"
 )
 
@@ -31,20 +31,12 @@ func main() {
 
 	client := github.NewClient(tc)
 
-	s := strings.Split(*repository, "/")
-	owner := s[0]
-	repo := s[1]
-
-	deployments := deploymentAPI{
-		owner:  owner,
-		repo:   repo,
-		client: client,
+	deployments := agent.NewDeploymentAPI(*repository, client)
+	agent := agent.Agent{
+		Env:         *env,
+		Deployments: deployments,
 	}
-	agent := Agent{
-		env:         *env,
-		deployments: &deployments,
-	}
-	if err := agent.run(ctx, !*once); err != nil {
+	if err := agent.Run(ctx, !*once, *sleepTime); err != nil {
 		log.Fatalf("Agent failed: %v", err)
 	}
 }
