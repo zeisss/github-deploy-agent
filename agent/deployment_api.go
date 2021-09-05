@@ -9,12 +9,12 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func NewDeploymentAPI(repository, env string, client *github.Client) *DeploymentAPI {
+func NewDeploymentAPI(repository, env string, client *github.Client) *DeploymentOptions {
 	s := strings.Split(repository, "/")
 	owner := s[0]
 	repo := s[1]
 
-	return &DeploymentAPI{
+	return &DeploymentOptions{
 		owner:  owner,
 		repo:   repo,
 		env:    env,
@@ -22,13 +22,13 @@ func NewDeploymentAPI(repository, env string, client *github.Client) *Deployment
 	}
 }
 
-type DeploymentAPI struct {
+type DeploymentOptions struct {
 	owner, repo string
 	env         string
 	client      *github.Client
 }
 
-func (api *DeploymentAPI) getDeployments(ctx context.Context) (deployments []*github.Deployment, err error) {
+func (api *DeploymentOptions) ListDeployments(ctx context.Context) (deployments []*github.Deployment, err error) {
 	retry.Do(func() error {
 		deployments, _, err = api.client.Repositories.ListDeployments(ctx, api.owner, api.repo, &github.DeploymentsListOptions{
 			Environment: api.env,
@@ -38,8 +38,8 @@ func (api *DeploymentAPI) getDeployments(ctx context.Context) (deployments []*gi
 	return deployments, err
 }
 
-func (api *DeploymentAPI) findNewestDeployment(ctx context.Context) (*github.Deployment, error) {
-	deployments, err := api.getDeployments(ctx)
+func (api *DeploymentOptions) FindNewestDeployment(ctx context.Context) (*github.Deployment, error) {
+	deployments, err := api.ListDeployments(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (api *DeploymentAPI) findNewestDeployment(ctx context.Context) (*github.Dep
 	return newestDeployment, nil
 }
 
-func (api *DeploymentAPI) hasSuccessStatus(ctx context.Context, depl *github.Deployment) (bool, error) {
+func (api *DeploymentOptions) HasSuccessStatus(ctx context.Context, depl *github.Deployment) (bool, error) {
 	statuses, _, err := api.client.Repositories.ListDeploymentStatuses(ctx, api.owner, api.repo, *depl.ID, &github.ListOptions{})
 	if err != nil {
 		return false, err
@@ -70,12 +70,12 @@ func (api *DeploymentAPI) hasSuccessStatus(ctx context.Context, depl *github.Dep
 	return false, nil
 }
 
-// createDeploymentStatus publishes a new status message for the given deployment object.
+// CreateDeploymentStatus publishes a new status message for the given deployment object.
 //
 // see https://developer.github.com/v3/repos/deployments/#create-a-deployment-status
 // state = pending | success | error | failure
 // description = string(140)
-func (api *DeploymentAPI) createDeploymentStatus(ctx context.Context, depl *github.Deployment, state, desc string) error {
+func (api *DeploymentOptions) CreateDeploymentStatus(ctx context.Context, depl *github.Deployment, state, desc string) error {
 	log.Printf("Setting state=%s descr=%s\n", state, desc)
 	return retry.Do(func() error {
 		_, _, err := api.client.Repositories.CreateDeploymentStatus(ctx, api.owner, api.repo, *depl.ID, &github.DeploymentStatusRequest{

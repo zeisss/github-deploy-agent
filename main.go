@@ -34,6 +34,9 @@ func main() {
 	deployments := agent.NewDeploymentAPI(*repository, *env, client)
 	agent := agent.Agent{
 		Deployments: deployments,
+		Deployer: &agent.Deployer{
+			Deployments: deployments,
+		},
 	}
 	if err := agent.Run(ctx, !*once, *sleepTime); err != nil {
 		log.Fatalf("Agent failed: %v", err)
