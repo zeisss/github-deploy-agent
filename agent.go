@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -15,9 +16,9 @@ type deploymentAPI struct {
 	client *github.Client
 }
 
-func (api deploymentAPI) getDeployments(env string) (deployments []github.Deployment, err error) {
+func (api deploymentAPI) getDeployments(ctx context.Context, env string) (deployments []*github.Deployment, err error) {
 	retry.Do(func() error {
-		deployments, _, err = api.client.Repositories.ListDeployments(api.owner, api.repo, &github.DeploymentsListOptions{
+		deployments, _, err = api.client.Repositories.ListDeployments(ctx, api.owner, api.repo, &github.DeploymentsListOptions{
 			Environment: env,
 		})
 		return err
@@ -25,13 +26,13 @@ func (api deploymentAPI) getDeployments(env string) (deployments []github.Deploy
 	return deployments, err
 }
 
-func (api deploymentAPI) findNewestDeployment(env string) (*github.Deployment, error) {
-	deployments, err := api.getDeployments(env)
+func (api deploymentAPI) findNewestDeployment(ctx context.Context, env string) (*github.Deployment, error) {
+	deployments, err := api.getDeployments(ctx, env)
 	if err != nil {
 		return nil, err
 	}
 
-	var newestDeployment github.Deployment
+	var newestDeployment *github.Deployment
 	for _, deployment := range deployments {
 		if newestDeployment.CreatedAt == nil || deployment.CreatedAt.Time.After(newestDeployment.CreatedAt.Time) {
 			newestDeployment = deployment
@@ -40,11 +41,11 @@ func (api deploymentAPI) findNewestDeployment(env string) (*github.Deployment, e
 	if newestDeployment.ID == nil {
 		return nil, nil
 	}
-	return &newestDeployment, nil
+	return newestDeployment, nil
 }
 
-func (api deploymentAPI) hasSuccessStatus(depl *github.Deployment) (bool, error) {
-	statuses, _, err := api.client.Repositories.ListDeploymentStatuses(api.owner, api.repo, *depl.ID, &github.ListOptions{})
+func (api deploymentAPI) hasSuccessStatus(ctx context.Context, depl *github.Deployment) (bool, error) {
+	statuses, _, err := api.client.Repositories.ListDeploymentStatuses(ctx, api.owner, api.repo, *depl.ID, &github.ListOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -62,10 +63,10 @@ func (api deploymentAPI) hasSuccessStatus(depl *github.Deployment) (bool, error)
 // see https://developer.github.com/v3/repos/deployments/#create-a-deployment-status
 // state = pending | success | error | failure
 // description = string(140)
-func (api deploymentAPI) createDeploymentStatus(depl *github.Deployment, state, desc string) error {
+func (api deploymentAPI) createDeploymentStatus(ctx context.Context, depl *github.Deployment, state, desc string) error {
 	log.Printf("Setting state=%s descr=%s\n", state, desc)
 	return retry.Do(func() error {
-		_, _, err := api.client.Repositories.CreateDeploymentStatus(api.owner, api.repo, *depl.ID, &github.DeploymentStatusRequest{
+		_, _, err := api.client.Repositories.CreateDeploymentStatus(ctx, api.owner, api.repo, *depl.ID, &github.DeploymentStatusRequest{
 			State:       &state,
 			Description: &desc,
 		})
@@ -79,20 +80,20 @@ type Agent struct {
 	deployments *deploymentAPI
 }
 
-func (agent Agent) run(loop bool) error {
-	deployment, err := agent.deployments.findNewestDeployment(agent.env)
+func (agent Agent) run(ctx context.Context, loop bool) error {
+	deployment, err := agent.deployments.findNewestDeployment(ctx, agent.env)
 	if err != nil {
 		return err
 	}
 
-	var lastID int
+	var lastID int64
 	if deployment != nil {
 		// If the latest deployment has no success message, deploy it immediately
-		if success, err := agent.deployments.hasSuccessStatus(deployment); err != nil {
+		if success, err := agent.deployments.hasSuccessStatus(ctx, deployment); err != nil {
 			return err
 		} else if !success {
 			log.Printf("Found new deployment=%d\n", *deployment.ID)
-			if err := agent.deploy(deployment); err != nil {
+			if err := agent.deploy(ctx, deployment); err != nil {
 				return err
 			}
 		} else {
@@ -105,7 +106,7 @@ func (agent Agent) run(loop bool) error {
 
 	if loop {
 		for {
-			if lastID, err = agent.checkRepo(lastID); err != nil {
+			if lastID, err = agent.checkRepo(ctx, lastID); err != nil {
 				return err
 			}
 			time.Sleep(*sleepTime)
@@ -114,8 +115,8 @@ func (agent Agent) run(loop bool) error {
 	return nil
 }
 
-func (agent Agent) checkRepo(lastID int) (int, error) {
-	newestDeployment, err := agent.deployments.findNewestDeployment(agent.env)
+func (agent Agent) checkRepo(ctx context.Context, lastID int64) (int64, error) {
+	newestDeployment, err := agent.deployments.findNewestDeployment(ctx, agent.env)
 	if err != nil {
 		return -1, err
 	}
@@ -126,7 +127,7 @@ func (agent Agent) checkRepo(lastID int) (int, error) {
 	}
 
 	log.Printf("Deploying %d\n", *newestDeployment.ID)
-	if err := agent.deploy(newestDeployment); err != nil {
+	if err := agent.deploy(ctx, newestDeployment); err != nil {
 		return -1, err
 	}
 	return *newestDeployment.ID, nil
@@ -149,9 +150,9 @@ func (agent Agent) hookContextForDeployment(depl *github.Deployment) hookCtx {
 	return hooks
 }
 
-func (agent Agent) deploy(depl *github.Deployment) error {
+func (agent Agent) deploy(ctx context.Context, depl *github.Deployment) error {
 	log.Printf("Starting deployment=%d...\n", *depl.ID)
-	if err := agent.deployments.createDeploymentStatus(depl, "pending", "Firing hook"); err != nil {
+	if err := agent.deployments.createDeploymentStatus(ctx, depl, "pending", "Firing hook"); err != nil {
 		return nil
 	}
 	hooks := agent.hookContextForDeployment(depl)
@@ -165,7 +166,7 @@ func (agent Agent) deploy(depl *github.Deployment) error {
 			log.Printf("post_failure failed: %v\n", err)
 		}
 
-		if err := agent.deployments.createDeploymentStatus(depl, "failure", "Hook failed"); err != nil {
+		if err := agent.deployments.createDeploymentStatus(ctx, depl, "failure", "Hook failed"); err != nil {
 			return nil
 		}
 
@@ -175,7 +176,7 @@ func (agent Agent) deploy(depl *github.Deployment) error {
 			log.Printf("post_failure failed: %v\n", err)
 		}
 
-		if err := agent.deployments.createDeploymentStatus(depl, "error", "Unknown hook: "+*depl.Task); err != nil {
+		if err := agent.deployments.createDeploymentStatus(ctx, depl, "error", "Unknown hook: "+*depl.Task); err != nil {
 			return nil
 		}
 	} else {
@@ -183,7 +184,7 @@ func (agent Agent) deploy(depl *github.Deployment) error {
 			log.Printf("post_success failed: %v\n", err)
 		}
 
-		if err := agent.deployments.createDeploymentStatus(depl, "success", "Finished"); err != nil {
+		if err := agent.deployments.createDeploymentStatus(ctx, depl, "success", "Finished"); err != nil {
 			return nil
 		}
 	}

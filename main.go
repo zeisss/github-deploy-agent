@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"strings"
 	"time"
@@ -21,10 +22,12 @@ var (
 func main() {
 	pflag.Parse()
 
+	ctx := context.Background()
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: *token},
 	)
-	tc := oauth2.NewClient(oauth2.NoContext, ts)
+	tc := oauth2.NewClient(ctx, ts)
 
 	client := github.NewClient(tc)
 
@@ -41,7 +44,7 @@ func main() {
 		env:         *env,
 		deployments: &deployments,
 	}
-	if err := agent.run(!*once); err != nil {
+	if err := agent.run(ctx, !*once); err != nil {
 		log.Fatalf("Agent failed: %v", err)
 	}
 }
