@@ -19,6 +19,6 @@ func init() {
 }
 
 func runApply(ctx context.Context) error {
-	agent := initAgent(ctx, agentConfig.Repository, agentConfig.Env, agentConfig.Token)
+	agent := initAgent(ctx, agentConfig.Repository, agentConfig.Env, agentConfig.Token, agentConfig.HooksPath)
 	return agent.Run(ctx, false, agentConfig.SleepTime)
 }

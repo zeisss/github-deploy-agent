@@ -10,7 +10,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func initAgent(ctx context.Context, ownerRepo, env, token string) *agent.Agent {
+func initAgent(ctx context.Context, ownerRepo, env, token, hooksPath string) *agent.Agent {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -18,11 +18,15 @@ func initAgent(ctx context.Context, ownerRepo, env, token string) *agent.Agent {
 
 	client := github.NewClient(tc)
 
+	hooks := &agent.Hooks{
+		Path: hooksPath,
+	}
 	deployments := agent.NewDeploymentAPI(ownerRepo, env, client)
 	agent := agent.Agent{
 		Log:         log.Default(),
 		Deployments: deployments,
 		Deployer: &agent.Deployer{
+			Hooks:       hooks,
 			Deployments: deployments,
 			Log:         log.Default(),
 		},

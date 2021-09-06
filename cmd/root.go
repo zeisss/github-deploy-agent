@@ -20,9 +20,11 @@ var agentConfig struct {
 	Env        string
 	Token      string
 	SleepTime  time.Duration
+	HooksPath  string
 }
 
 func init() {
+	rootCmd.PersistentFlags().StringVar(&agentConfig.HooksPath, "tasks.path", "./hooks", "Path to directory with tasks to be executed")
 	rootCmd.PersistentFlags().StringVar(&agentConfig.Repository, "repository", "", "The repository to deploy for - owner/repo")
 	rootCmd.PersistentFlags().StringVar(&agentConfig.Env, "env", "production", "The environment to act on")
 	rootCmd.PersistentFlags().StringVar(&agentConfig.Token, "token", "", "API token for github")

@@ -10,11 +10,12 @@ import (
 
 type Deployer struct {
 	Deployments *DeploymentOptions
+	Hooks       *Hooks
 	Log         Logger
 }
 
-func (deployer Deployer) hookContextForDeployment(depl *github.Deployment) Hooks {
-	hookEnv := []string{
+func (deployer Deployer) hookContextForDeployment(depl *github.Deployment) *Hooks {
+	env := []string{
 		fmt.Sprintf("GITHUB_ENV=%s", *depl.Environment),
 		fmt.Sprintf("GITHUB_TASK=%s", *depl.Task),
 		fmt.Sprintf("GITHUB_DEPLOYMENT_ID=%d", *depl.ID),
@@ -26,11 +27,7 @@ func (deployer Deployer) hookContextForDeployment(depl *github.Deployment) Hooks
 		fmt.Sprintf("GITHUB_CREATOR=%s", *depl.Creator.Login),
 		fmt.Sprintf("GITHUB_CREATOR_AVATAR=%s", *depl.Creator.AvatarURL),
 	}
-	hooks := Hooks{
-		Path: "./hooks/",
-		env:  hookEnv,
-	}
-	return hooks
+	return deployer.Hooks.WithEnv(env)
 }
 
 func (deployer Deployer) Deploy(ctx context.Context, depl *github.Deployment) error {

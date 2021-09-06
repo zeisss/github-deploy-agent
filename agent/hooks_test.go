@@ -7,10 +7,9 @@ import (
 )
 
 func TestHooks(t *testing.T) {
-	hooks := givenTestdataHooks()
-	hooks.env = []string{
+	hooks := givenTestdataHooks().WithEnv([]string{
 		"HELLO=WORLD",
-	}
+	})
 
 	err := hooks.fireCustom("helloworld.bash")
 	assert.NoError(t, err)

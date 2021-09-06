@@ -18,6 +18,13 @@ type Hooks struct {
 	env  []string
 }
 
+func (h *Hooks) WithEnv(env []string) *Hooks {
+	return &Hooks{
+		Path: h.Path,
+		env:  env,
+	}
+}
+
 func (h Hooks) _fire(name string) error {
 	_, err := os.Stat(filepath.Join(h.Path, name))
 	if err != nil {
