@@ -43,13 +43,13 @@ func (deployer Deployer) Deploy(ctx context.Context, depl *github.Deployment) er
 
 	if err := hooks.fireCustom(*depl.Task); err != nil {
 		var (
-			state string = "failure"
-			desc  string = "Hook failed"
+			state deploymentState = deploymentStateFailure
+			desc  string          = "Hook failed"
 		)
 
 		if errors.Is(err, ErrHookNotFound) {
 			deployer.Log.Printf("No hook '%s' found.\n", *depl.Task)
-			state = "error"
+			state = deploymentStateError
 			desc = "Unknown hook: " + *depl.Task
 		}
 
@@ -65,14 +65,14 @@ func (deployer Deployer) Deploy(ctx context.Context, depl *github.Deployment) er
 			deployer.Log.Printf("post_success failed: %v\n", err)
 		}
 
-		if err := deployer.createDeploymentStatus(ctx, depl, "success", "Finished"); err != nil {
+		if err := deployer.createDeploymentStatus(ctx, depl, deploymentStateSuccess, "Finished"); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (deployer *Deployer) createDeploymentStatus(ctx context.Context, depl *github.Deployment, state, desc string) error {
+func (deployer *Deployer) createDeploymentStatus(ctx context.Context, depl *github.Deployment, state deploymentState, desc string) error {
 	deployer.Log.Printf("Setting state=%s descr=%s\n", state, desc)
 	return deployer.Deployments.CreateDeploymentStatus(ctx, depl, state, desc)
 }

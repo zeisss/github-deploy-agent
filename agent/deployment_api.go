@@ -8,6 +8,17 @@ import (
 	"github.com/google/go-github/github"
 )
 
+type deploymentState string
+
+const (
+	deploymentStateError      deploymentState = "error"
+	deploymentStateFailure    deploymentState = "failure"
+	deploymentStatePending    deploymentState = "pending"
+	deploymentStateInProgress deploymentState = "in_progress"
+	deploymentStateQueued     deploymentState = "queued"
+	deploymentStateSuccess    deploymentState = "success"
+)
+
 func NewDeploymentAPI(repository, env string, client *github.Client) *DeploymentOptions {
 	s := strings.Split(repository, "/")
 	owner := s[0]
@@ -63,9 +74,9 @@ func (api *DeploymentOptions) HasSuccessStatus(ctx context.Context, depl *github
 	return hasState(statuses, "success"), nil
 }
 
-func hasState(statuses []*github.DeploymentStatus, needleState string) bool {
+func hasState(statuses []*github.DeploymentStatus, needleState deploymentState) bool {
 	for _, status := range statuses {
-		if status.State != nil && *status.State == needleState {
+		if status.State != nil && *status.State == string(needleState) {
 			return true
 		}
 	}
@@ -77,10 +88,11 @@ func hasState(statuses []*github.DeploymentStatus, needleState string) bool {
 // see https://developer.github.com/v3/repos/deployments/#create-a-deployment-status
 // state = pending | success | error | failure
 // description = string(140)
-func (api *DeploymentOptions) CreateDeploymentStatus(ctx context.Context, depl *github.Deployment, state, desc string) error {
+func (api *DeploymentOptions) CreateDeploymentStatus(ctx context.Context, depl *github.Deployment, state deploymentState, desc string) error {
+	s := string(state)
 	return retry.Do(func() error {
 		_, _, err := api.client.Repositories.CreateDeploymentStatus(ctx, api.owner, api.repo, *depl.ID, &github.DeploymentStatusRequest{
-			State:       &state,
+			State:       &s,
 			Description: &desc,
 		})
 		return err
