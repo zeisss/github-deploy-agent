@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 var ErrHookNotFound error = errors.New("unknown hook")
@@ -13,11 +14,12 @@ var ErrHookNotFound error = errors.New("unknown hook")
 // hooksCtx is used to define how to execute the hook scripts.
 // When creating, the environment variables are provided.
 type Hooks struct {
-	env []string
+	Path string
+	env  []string
 }
 
 func (h Hooks) _fire(name string) error {
-	_, err := os.Stat("./hooks/" + name)
+	_, err := os.Stat(filepath.Join(h.Path, name))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return ErrHookNotFound
@@ -26,7 +28,7 @@ func (h Hooks) _fire(name string) error {
 	}
 
 	log.Printf("Firing hook %s\n", name)
-	cmd := exec.Command("./hooks/" + name)
+	cmd := exec.Command(filepath.Join(h.Path, name))
 	cmd.Env = h.env
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
