@@ -9,7 +9,7 @@ import (
 
 func TestHasState(t *testing.T) {
 	var (
-		stateInit    = "init"
+		stateInit    = "in_progress"
 		stateSuccess = "success"
 	)
 	statuses := []*github.DeploymentStatus{
@@ -17,6 +17,6 @@ func TestHasState(t *testing.T) {
 		{State: &stateSuccess},
 	}
 
-	assert.True(t, hasState(statuses, "success"))
-	assert.False(t, hasState(statuses, "errror"))
+	assert.True(t, hasState(statuses, deploymentStateSuccess))
+	assert.False(t, hasState(statuses, deploymentStateFailure))
 }
