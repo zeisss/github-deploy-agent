@@ -26,7 +26,10 @@ func (deployer Deployer) hookContextForDeployment(depl *github.Deployment) Hooks
 		fmt.Sprintf("GITHUB_CREATOR=%s", *depl.Creator.Login),
 		fmt.Sprintf("GITHUB_CREATOR_AVATAR=%s", *depl.Creator.AvatarURL),
 	}
-	hooks := Hooks{env: hookEnv}
+	hooks := Hooks{
+		Path: "./hooks/",
+		env:  hookEnv,
+	}
 	return hooks
 }
 
