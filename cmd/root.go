@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var rootCmd = cobra.Command{
@@ -23,10 +24,10 @@ var agentConfig struct {
 	HooksPath  string
 }
 
-func init() {
-	rootCmd.PersistentFlags().StringVar(&agentConfig.HooksPath, "tasks.path", "./hooks", "Path to directory with tasks to be executed")
-	rootCmd.PersistentFlags().StringVar(&agentConfig.Repository, "repository", "", "The repository to deploy for - owner/repo")
-	rootCmd.PersistentFlags().StringVar(&agentConfig.Env, "env", "production", "The environment to act on")
-	rootCmd.PersistentFlags().StringVar(&agentConfig.Token, "token", "", "API token for github")
-	rootCmd.PersistentFlags().DurationVar(&agentConfig.SleepTime, "sleep", 60*time.Second, "Sleep time between checks to github api")
+func registerAgentConfigFlags(flags *pflag.FlagSet) {
+	flags.StringVar(&agentConfig.HooksPath, "tasks.path", "./hooks", "Path to directory with tasks to be executed")
+	flags.StringVar(&agentConfig.Repository, "repository", "", "The repository to deploy for - owner/repo")
+	flags.StringVar(&agentConfig.Env, "env", "testing", "The environment to act on")
+	flags.StringVar(&agentConfig.Token, "token", "", "API token for github")
+	flags.DurationVar(&agentConfig.SleepTime, "sleep", 60*time.Second, "Sleep time between checks to github api")
 }

@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"strings"
 
 	"github.com/giantswarm/retry-go"
 	"github.com/google/go-github/github"
@@ -11,37 +10,21 @@ import (
 type deploymentState string
 
 const (
-	deploymentStateError      deploymentState = "error"
-	deploymentStateFailure    deploymentState = "failure"
-	deploymentStatePending    deploymentState = "pending"
-	deploymentStateInProgress deploymentState = "in_progress"
-	deploymentStateQueued     deploymentState = "queued"
-	deploymentStateSuccess    deploymentState = "success"
+	deploymentStateError   deploymentState = "error"
+	deploymentStateFailure deploymentState = "failure"
+	deploymentStateSuccess deploymentState = "success"
 )
 
-func NewDeploymentAPI(repository, env string, client *github.Client) *DeploymentOptions {
-	s := strings.Split(repository, "/")
-	owner := s[0]
-	repo := s[1]
-
-	return &DeploymentOptions{
-		owner:  owner,
-		repo:   repo,
-		env:    env,
-		client: client,
-	}
-}
-
 type DeploymentOptions struct {
-	owner, repo string
-	env         string
-	client      *github.Client
+	Owner, Repo string
+	Env         string
+	Client      *github.Client
 }
 
 func (api *DeploymentOptions) ListDeployments(ctx context.Context) (deployments []*github.Deployment, err error) {
 	retry.Do(func() error {
-		deployments, _, err = api.client.Repositories.ListDeployments(ctx, api.owner, api.repo, &github.DeploymentsListOptions{
-			Environment: api.env,
+		deployments, _, err = api.Client.Repositories.ListDeployments(ctx, api.Owner, api.Repo, &github.DeploymentsListOptions{
+			Environment: api.Env,
 		})
 		return err
 	})
@@ -67,7 +50,7 @@ func (api *DeploymentOptions) FindNewestDeployment(ctx context.Context) (*github
 }
 
 func (api *DeploymentOptions) HasSuccessStatus(ctx context.Context, depl *github.Deployment) (bool, error) {
-	statuses, _, err := api.client.Repositories.ListDeploymentStatuses(ctx, api.owner, api.repo, *depl.ID, &github.ListOptions{})
+	statuses, _, err := api.Client.Repositories.ListDeploymentStatuses(ctx, api.Owner, api.Repo, *depl.ID, &github.ListOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -91,7 +74,7 @@ func hasState(statuses []*github.DeploymentStatus, needleState deploymentState) 
 func (api *DeploymentOptions) CreateDeploymentStatus(ctx context.Context, depl *github.Deployment, state deploymentState, desc string) error {
 	s := string(state)
 	return retry.Do(func() error {
-		_, _, err := api.client.Repositories.CreateDeploymentStatus(ctx, api.owner, api.repo, *depl.ID, &github.DeploymentStatusRequest{
+		_, _, err := api.Client.Repositories.CreateDeploymentStatus(ctx, api.Owner, api.Repo, *depl.ID, &github.DeploymentStatusRequest{
 			State:       &s,
 			Description: &desc,
 		})

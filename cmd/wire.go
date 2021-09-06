@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/google/go-github/github"
 	"github.com/zeisss/github-deploy-agent/agent"
@@ -10,18 +12,36 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func initAgent(ctx context.Context, ownerRepo, env, token, hooksPath string) *agent.Agent {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
+func initGithubClient(ctx context.Context, ownerRepo, token string) (*deploymentConfig, error) {
+	client := provideGithubClient(ctx, token)
+	owner, repo, err := provideOwnerAndRepo(ownerRepo)
+	if err != nil {
+		return nil, err
+	}
 
-	client := github.NewClient(tc)
+	return &deploymentConfig{
+		Client: client,
+		Owner:  owner,
+		Repo:   repo,
+	}, nil
+}
+
+func initAgent(ctx context.Context, ownerRepo, env, token, hooksPath string) (*agent.Agent, error) {
+	client := provideGithubClient(ctx, token)
+	owner, repo, err := provideOwnerAndRepo(ownerRepo)
+	if err != nil {
+		return nil, err
+	}
 
 	hooks := &agent.Hooks{
 		Path: hooksPath,
 	}
-	deployments := agent.NewDeploymentAPI(ownerRepo, env, client)
+	deployments := &agent.DeploymentOptions{
+		Owner:  owner,
+		Repo:   repo,
+		Client: client,
+		Env:    env,
+	}
 	agent := agent.Agent{
 		Log:         log.Default(),
 		Deployments: deployments,
@@ -31,5 +51,26 @@ func initAgent(ctx context.Context, ownerRepo, env, token, hooksPath string) *ag
 			Log:         log.Default(),
 		},
 	}
-	return &agent
+	return &agent, nil
+}
+
+func provideGithubClient(ctx context.Context, token string) *github.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	client := github.NewClient(tc)
+
+	return client
+}
+
+func provideOwnerAndRepo(input string) (string, string, error) {
+	s := strings.Split(input, "/")
+	if len(s) != 2 {
+		return "", "", fmt.Errorf("expected <owner>/<repo> format, got '%s'", input)
+	}
+	owner := s[0]
+	repo := s[1]
+	return owner, repo, nil
 }

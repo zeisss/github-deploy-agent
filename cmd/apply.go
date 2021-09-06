@@ -16,9 +16,13 @@ var applyCmd = cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(&applyCmd)
+	registerAgentConfigFlags(applyCmd.Flags())
 }
 
 func runApply(ctx context.Context) error {
-	agent := initAgent(ctx, agentConfig.Repository, agentConfig.Env, agentConfig.Token, agentConfig.HooksPath)
+	agent, err := initAgent(ctx, agentConfig.Repository, agentConfig.Env, agentConfig.Token, agentConfig.HooksPath)
+	if err != nil {
+		return err
+	}
 	return agent.Run(ctx, false, agentConfig.SleepTime)
 }

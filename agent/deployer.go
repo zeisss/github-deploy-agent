@@ -20,8 +20,8 @@ func (deployer Deployer) hookContextForDeployment(depl *github.Deployment) *Hook
 		fmt.Sprintf("GITHUB_TASK=%s", *depl.Task),
 		fmt.Sprintf("GITHUB_DEPLOYMENT_ID=%d", *depl.ID),
 		fmt.Sprintf("GITHUB_DEPLOYMENT_URL=%s", *depl.URL),
-		fmt.Sprintf("GITHUB_OWNER=%s", deployer.Deployments.owner),
-		fmt.Sprintf("GITHUB_REPO=%s", deployer.Deployments.repo),
+		fmt.Sprintf("GITHUB_OWNER=%s", deployer.Deployments.Owner),
+		fmt.Sprintf("GITHUB_REPO=%s", deployer.Deployments.Repo),
 		fmt.Sprintf("GITHUB_REF=%s", *depl.Ref),
 		fmt.Sprintf("GITHUB_SHA=%s", *depl.SHA),
 		fmt.Sprintf("GITHUB_CREATOR=%s", *depl.Creator.Login),
@@ -36,10 +36,6 @@ func (deployer Deployer) Deploy(ctx context.Context, depl *github.Deployment) er
 		return nil
 	}
 	hooks := deployer.hookContextForDeployment(depl)
-
-	if err := deployer.createDeploymentStatus(ctx, depl, deploymentStateInProgress, "Accepted"); err != nil {
-		return err
-	}
 
 	if err := hooks.firePreTask(); err != nil {
 		deployer.Log.Printf("pre_task failed: %v\n", err)
