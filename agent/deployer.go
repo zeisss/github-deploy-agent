@@ -37,6 +37,10 @@ func (deployer Deployer) Deploy(ctx context.Context, depl *github.Deployment) er
 	}
 	hooks := deployer.hookContextForDeployment(depl)
 
+	if err := deployer.createDeploymentStatus(ctx, depl, deploymentStateInProgress, "Accepted"); err != nil {
+		return err
+	}
+
 	if err := hooks.firePreTask(); err != nil {
 		deployer.Log.Printf("pre_task failed: %v\n", err)
 	}

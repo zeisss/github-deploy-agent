@@ -31,7 +31,6 @@ func main() {
 }
 
 func initAgent(ctx context.Context, ownerRepo, env string) *agent.Agent {
-
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: *token},
 	)
