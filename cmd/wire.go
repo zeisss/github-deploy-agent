@@ -20,6 +20,7 @@ func initAgent(ctx context.Context, ownerRepo, env, token string) *agent.Agent {
 
 	deployments := agent.NewDeploymentAPI(ownerRepo, env, client)
 	agent := agent.Agent{
+		Log:         log.Default(),
 		Deployments: deployments,
 		Deployer: &agent.Deployer{
 			Deployments: deployments,
