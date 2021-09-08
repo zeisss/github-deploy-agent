@@ -17,7 +17,7 @@ printf '#!/bin/sh\necho deploy hook\nenv' > hooks/deploy
 chmod +x hooks/*
 
 ## Execute the agent
-../github-deploy-agent server \
+go run .. server \
   --env="testing" \
   --repository="zeisss/github-deploy-agent" \
   --token="${GITHUB_TOKEN}" \

@@ -10,9 +10,9 @@ import (
 type deploymentState string
 
 const (
-	deploymentStateError   deploymentState = "error"
-	deploymentStateFailure deploymentState = "failure"
-	deploymentStateSuccess deploymentState = "success"
+	DeploymentStateError   deploymentState = "error"
+	DeploymentStateFailure deploymentState = "failure"
+	DeploymentStateSuccess deploymentState = "success"
 )
 
 type DeploymentOptions struct {
@@ -54,16 +54,18 @@ func (api *DeploymentOptions) HasSuccessStatus(ctx context.Context, depl *github
 	if err != nil {
 		return false, err
 	}
-	return hasState(statuses, "success"), nil
+	return FindState(statuses, DeploymentStateSuccess) >= 0, nil
 }
 
-func hasState(statuses []*github.DeploymentStatus, needleState deploymentState) bool {
-	for _, status := range statuses {
-		if status.State != nil && *status.State == string(needleState) {
-			return true
+func FindState(statuses []*github.DeploymentStatus, needleStates ...deploymentState) int {
+	for index, status := range statuses {
+		for _, needle := range needleStates {
+			if status.State != nil && *status.State == string(needle) {
+				return index
+			}
 		}
 	}
-	return false
+	return -1
 }
 
 // CreateDeploymentStatus publishes a new status message for the given deployment object.

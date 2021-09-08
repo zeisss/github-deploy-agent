@@ -17,6 +17,7 @@ func TestHasState(t *testing.T) {
 		{State: &stateSuccess},
 	}
 
-	assert.True(t, hasState(statuses, deploymentStateSuccess))
-	assert.False(t, hasState(statuses, deploymentStateFailure))
+	assert.Equal(t, 1, FindState(statuses, DeploymentStateSuccess))
+	assert.Equal(t, -1, FindState(statuses, DeploymentStateFailure))
+	assert.Equal(t, 1, FindState(statuses, DeploymentStateFailure, DeploymentStateSuccess))
 }

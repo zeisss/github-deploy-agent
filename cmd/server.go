@@ -20,7 +20,7 @@ func init() {
 }
 
 func runServer(ctx context.Context) error {
-	agent, err := initAgent(ctx, agentConfig.Repository, agentConfig.Env, agentConfig.Token, agentConfig.HooksPath)
+	agent, err := initAgent(ctx, agentConfig.Repository, agentConfig.Env, commonConfig.Token, agentConfig.HooksPath)
 	if err != nil {
 		return err
 	}

@@ -43,13 +43,13 @@ func (deployer Deployer) Deploy(ctx context.Context, depl *github.Deployment) er
 
 	if err := hooks.fireCustom(*depl.Task); err != nil {
 		var (
-			state deploymentState = deploymentStateFailure
+			state deploymentState = DeploymentStateFailure
 			desc  string          = "Hook failed"
 		)
 
 		if errors.Is(err, ErrHookNotFound) {
 			deployer.Log.Printf("No hook '%s' found.\n", *depl.Task)
-			state = deploymentStateError
+			state = DeploymentStateError
 			desc = "Unknown hook: " + *depl.Task
 		}
 
@@ -65,7 +65,7 @@ func (deployer Deployer) Deploy(ctx context.Context, depl *github.Deployment) er
 			deployer.Log.Printf("post_success failed: %v\n", err)
 		}
 
-		if err := deployer.createDeploymentStatus(ctx, depl, deploymentStateSuccess, "Finished"); err != nil {
+		if err := deployer.createDeploymentStatus(ctx, depl, DeploymentStateSuccess, "Finished"); err != nil {
 			return err
 		}
 	}
